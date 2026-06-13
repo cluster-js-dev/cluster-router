@@ -41,20 +41,18 @@ export class ClBaseApp extends ClBase {
     return this.templateHtml();
   }
 
-  public override connectedCallback(): void {
-    super.connectedCallback();
-    window.addEventListener("on-route", this._onRoute);
-    window.addEventListener("popstate", this._onPopState);
+  protected override afterRender(): void {
+    super.afterRender();
+    if (this.firstRender) {
+      window.addEventListener("on-route", this._onRoute);
+      window.addEventListener("popstate", this._onPopState);
+    }
+    void this._loadPageAsync();
   }
 
   protected override dispose(): void {
     window.removeEventListener("on-route", this._onRoute);
     window.removeEventListener("popstate", this._onPopState);
-  }
-
-  protected override afterRender(): void {
-    super.afterRender();
-    void this._loadPageAsync();
   }
 
   private async _loadPageAsync(): Promise<void> {

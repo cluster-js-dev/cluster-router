@@ -1,0 +1,63 @@
+{
+  "name": "cluster-router",
+  "version": "0.1.36",
+  "description": "SPA routing layer for cluster-components — app shell, page/layout base classes, and router service",
+  "main": "dist/src/index.js",
+  "module": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js"
+    },
+    "./app": {
+      "import": "./dist/src/app/index.js",
+      "require": "./dist/src/app/index.js"
+    },
+    "./services": {
+      "import": "./dist/src/services/index.js",
+      "require": "./dist/src/services/index.js"
+    },
+    "./decorators": {
+      "import": "./dist/src/decorators/index.js",
+      "require": "./dist/src/decorators/index.js"
+    }
+  },
+  "files": [
+    "dist/src"
+  ],
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write src/**/*.ts",
+    "lint": "eslint src/**/*.ts",
+    "build": "npm run clean && tsc && esbuild dist/src/index.js --bundle --minify --keep-names --outfile=dist/src/cluster-router.min.js",
+    "clean": "rimraf dist",
+    "prepare": "npm run build"
+  },
+  "author": "Jonathan Espinal",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.11",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "esbuild": "^0.25.1",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.2"
+  },
+  "keywords": [
+    "cluster-router",
+    "webcomponents",
+    "framework",
+    "typescript",
+    "routing",
+    "spa"
+  ],
+  "dependencies": {
+    "cluster-components": "file:../cluster-components/cluster-components-0.1.41.tgz",
+    "cluster-extensions": "file:../cluster-extensions/cluster-extensions-0.1.37.tgz",
+    "cluster-inject": "file:../cluster-inject/cluster-inject-0.1.36.tgz",
+    "cluster-templates": "file:../cluster-templates/cluster-templates-0.1.48.tgz"
+  }
+}

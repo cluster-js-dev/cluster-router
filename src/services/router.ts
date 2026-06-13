@@ -42,7 +42,7 @@ export class RouterService {
     if (keepHistory) {
       window.history.pushState({}, "", path);
     } else {
-      history.replaceState(null, "", path);
+      window.history.replaceState(null, "", path);
     }
 
     window.dispatchEvent(new CustomEvent("on-route", {}));
@@ -55,13 +55,14 @@ export class RouterService {
     window.location.href = window.location.origin + this._getUrl(path, params);
   }
 
-  private _getUrl(hash: string, params?: Record<string, string>): string {
+  private _getUrl(path: string, params?: Record<string, string>): string {
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     if (params) {
       const queryString = Object.keys(params)
         .map((key) => `${key}=${encodeURIComponent(params[key])}`)
         .join("&");
-      hash = `/${hash}/?${queryString}`;
+      return `${normalizedPath}?${queryString}`;
     }
-    return hash;
+    return normalizedPath;
   }
 }

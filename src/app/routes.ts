@@ -9,6 +9,6 @@ export type RouteData = {
 };
 
 export interface Routes {
-  [keyof: string]: RouteData;
-  "/404": RouteData;
+  [key: string]: RouteData | undefined;
+  "/404"?: RouteData;
 }

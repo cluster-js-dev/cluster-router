@@ -27,6 +27,13 @@ export class ClBaseApp extends ClBase {
 
   private _layout?: typeof ClBaseLayout = ClBaseLayout;
 
+  private _onRoute = () => {
+    void this._loadPageAsync();
+  };
+  private _onPopState = () => {
+    void this._loadPageAsync();
+  };
+
   protected override html(): RenderTemplate {
     if (this.templateHtml === undefined || this.templateHtml === null) {
       return html``;
@@ -34,24 +41,23 @@ export class ClBaseApp extends ClBase {
     return this.templateHtml();
   }
 
-  protected override async afterRenderAsync() {
-    await super.afterRenderAsync();
-    await this._loadAppAsync();
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("on-route", this._onRoute);
+    window.addEventListener("popstate", this._onPopState);
   }
 
-  private async _loadAppAsync() {
-    if (this.firstRender) {
-      window.addEventListener("on-route", async () => {
-        await this._loadPageAsync();
-      });
-      window.addEventListener("popstate", async () => {
-        await this._loadPageAsync();
-      });
-    }
-    await this._loadPageAsync();
+  protected override dispose(): void {
+    window.removeEventListener("on-route", this._onRoute);
+    window.removeEventListener("popstate", this._onPopState);
   }
 
-  private async _loadPageAsync() {
+  protected override afterRender(): void {
+    super.afterRender();
+    void this._loadPageAsync();
+  }
+
+  private async _loadPageAsync(): Promise<void> {
     if (this.routes === undefined) {
       return;
     }
@@ -65,13 +71,13 @@ export class ClBaseApp extends ClBase {
         ClBody.instance.render();
         return;
       }
-      route = this.routes["/404"];
+      route = this.routes["/404"]!;
     } else {
-      route = this.routes[routeInfo?.path!];
+      route = this.routes[routeInfo.path]!;
     }
 
     const layout = route.layout;
-    if (layout != this._layout) {
+    if (layout !== this._layout) {
       this._layout = layout;
       this.templateHtml = () =>
         ClBase.dynamic({
@@ -83,11 +89,11 @@ export class ClBaseApp extends ClBase {
 
     let params: Record<string, any> = {};
     if (route.props) {
-      params = await route.props(routeInfo!.params);
+      params = await route.props(routeInfo?.params ?? null);
     }
 
     if (route.onBefore !== undefined) {
-      if (await route.onBefore(routeInfo!.params)) {
+      if (await route.onBefore(routeInfo?.params ?? null)) {
         ClBody.instance.templateHtml = () =>
           ClBase.dynamic({
             name: route.page.clName,

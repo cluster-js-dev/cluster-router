@@ -55,6 +55,14 @@ export class ClBaseApp extends ClBase {
     }
   }
 
+  protected onRouteError(_error: unknown): void {
+    const body = ClBody.instance;
+    if (body !== undefined) {
+      body.templateHtml = () => html`<h1>Navigation error</h1>`;
+      body.render();
+    }
+  }
+
   protected override dispose(): void {
     window.removeEventListener("on-route", this._onRoute);
     window.removeEventListener("popstate", this._onPopState);
@@ -100,14 +108,19 @@ export class ClBaseApp extends ClBase {
     }
 
     let params: Record<string, any> = {};
-    if (route.props) {
-      params = await route.props(routeInfo?.params ?? null);
-      if (ctrl.signal.aborted) return;
-    }
+    try {
+      if (route.props) {
+        params = await route.props(routeInfo?.params ?? null);
+        if (ctrl.signal.aborted) return;
+      }
 
-    if (route.onBefore !== undefined) {
-      if (!(await route.onBefore(routeInfo?.params ?? null))) return;
-      if (ctrl.signal.aborted) return;
+      if (route.onBefore !== undefined) {
+        if (!(await route.onBefore(routeInfo?.params ?? null))) return;
+        if (ctrl.signal.aborted) return;
+      }
+    } catch (error) {
+      if (!ctrl.signal.aborted) this.onRouteError(error);
+      return;
     }
 
     const body = ClBody.instance;

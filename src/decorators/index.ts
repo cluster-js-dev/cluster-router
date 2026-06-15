@@ -1,1 +1,2 @@
-export { ClPage, ClPageConfig } from "./cl-page";
+export { ClPage } from "./cl-page";
+export type { ClPageConfig, PageEntry } from "./cl-page";

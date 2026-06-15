@@ -50,7 +50,7 @@ export class RouterService {
       window.history.replaceState({ scrollY: 0 }, "", path);
     }
 
-    window.dispatchEvent(new CustomEvent("on-route", {}));
+    window.dispatchEvent(new CustomEvent("cl-route", {}));
   }
 
   /**

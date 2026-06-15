@@ -10,6 +10,7 @@ export type RouteData<P extends RouteParams = RouteParams> = {
   layout?: typeof ClBaseLayout;
   /** Name of the <cl-body> outlet to render into. Defaults to "default". */
   outlet?: string;
+  transition?: string;
   onBefore?: (params: P | null) => Promise<boolean>;
   props?: (params: P | null) => Promise<Record<string, any>>;
 };

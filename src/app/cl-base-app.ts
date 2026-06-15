@@ -7,6 +7,7 @@ import { PageFactory, RouteData, Routes } from "./routes";
 import { ClBody } from "./cl-body";
 import { ClBaseLayout } from "./cl-base-layout";
 import { ClBasePage } from "./cl-base-page";
+import { buildRegistryRoutes } from "./page-registry";
 
 @ClComponent("cl-base-app", {
   css: () => css`
@@ -29,6 +30,7 @@ export class ClBaseApp extends ClBase {
   private _layout?: typeof ClBaseLayout = undefined;
   private _navController?: AbortController;
   private _pendingPageLoad = false;
+  private _cachedRoutes?: Routes;
 
   private _onRoute = () => {
     void this._loadPageAsync();
@@ -48,7 +50,7 @@ export class ClBaseApp extends ClBase {
     super.afterRender();
     if (this.firstRender) {
       history.scrollRestoration = "manual";
-      window.addEventListener("on-route", this._onRoute);
+      window.addEventListener("cl-route", this._onRoute);
       window.addEventListener("popstate", this._onPopState);
       void this._loadPageAsync();
     } else if (this._pendingPageLoad) {
@@ -66,9 +68,16 @@ export class ClBaseApp extends ClBase {
   }
 
   protected override dispose(): void {
-    window.removeEventListener("on-route", this._onRoute);
+    window.removeEventListener("cl-route", this._onRoute);
     window.removeEventListener("popstate", this._onPopState);
     this._navController?.abort();
+  }
+
+  private _getRoutes(): Routes {
+    if (this._cachedRoutes === undefined) {
+      this._cachedRoutes = { ...buildRegistryRoutes(), ...this.routes };
+    }
+    return this._cachedRoutes;
   }
 
   private async _loadPageAsync(): Promise<void> {
@@ -81,15 +90,14 @@ export class ClBaseApp extends ClBase {
     const targetScrollY: number =
       (window.history.state as { scrollY?: number })?.scrollY ?? 0;
 
-    if (this.routes === undefined) {
-      return;
-    }
+    const routes = this._getRoutes();
+    if (Object.keys(routes).length === 0) return;
 
-    const routeInfo = this.urlInfo.matchRoute(this.routes);
+    const routeInfo = this.urlInfo.matchRoute(routes);
     let route: RouteData;
 
     if (routeInfo === null) {
-      if (!("/404" in this.routes)) {
+      if (!("/404" in routes)) {
         const body = ClBody.named("default");
         if (body !== undefined) {
           body.templateHtml = () => html`<h1>404 Not Found</h1>`;
@@ -97,9 +105,9 @@ export class ClBaseApp extends ClBase {
         }
         return;
       }
-      route = this.routes["/404"]!;
+      route = routes["/404"]!;
     } else {
-      route = this.routes[routeInfo.path]!;
+      route = routes[routeInfo.path]!;
     }
 
     const layout = route.layout ?? ClBaseLayout;

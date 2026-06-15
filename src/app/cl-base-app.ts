@@ -3,9 +3,10 @@ import { ClBase, ClComponent } from "cluster-components";
 import { Inject } from "cluster-inject";
 import { URLInfoService } from "cluster-extensions/services";
 
-import { RouteData, Routes } from "./routes";
+import { PageFactory, RouteData, Routes } from "./routes";
 import { ClBody } from "./cl-body";
 import { ClBaseLayout } from "./cl-base-layout";
+import { ClBasePage } from "./cl-base-page";
 
 @ClComponent("cl-base-app", {
   css: () => css`
@@ -108,6 +109,7 @@ export class ClBaseApp extends ClBase {
     }
 
     let params: Record<string, any> = {};
+    let PageClass: typeof ClBasePage;
     try {
       if (route.props) {
         params = await route.props(routeInfo?.params ?? null);
@@ -117,6 +119,14 @@ export class ClBaseApp extends ClBase {
       if (route.onBefore !== undefined) {
         if (!(await route.onBefore(routeInfo?.params ?? null))) return;
         if (ctrl.signal.aborted) return;
+      }
+
+      if ("clName" in route.page) {
+        PageClass = route.page as typeof ClBasePage;
+      } else {
+        const mod = await (route.page as PageFactory)();
+        if (ctrl.signal.aborted) return;
+        PageClass = mod.default;
       }
     } catch (error) {
       if (!ctrl.signal.aborted) this.onRouteError(error);
@@ -128,7 +138,7 @@ export class ClBaseApp extends ClBase {
 
     body.templateHtml = () =>
       ClBase.dynamic({
-        name: route.page.clName,
+        name: PageClass.clName,
         props: params,
       });
     body.render();

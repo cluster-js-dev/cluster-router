@@ -28,15 +28,19 @@
   ],
   "type": "module",
   "scripts": {
-    "format": "prettier --write src/**/*.ts",
-    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts tests/**/*.ts",
+    "lint": "eslint src/**/*.ts tests/**/*.ts",
     "build": "npm run clean && tsc && esbuild dist/src/index.js --bundle --minify --keep-names --outfile=dist/src/cluster-router.min.js",
     "clean": "rimraf dist",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "test": "vite build && playwright test --project=webkit",
+    "build-test": "vite build && playwright test --project=webkit",
+    "dev": "vite build && vite"
   },
   "author": "Jonathan Espinal",
   "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.51.1",
     "@types/node": "^22.13.11",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
@@ -44,7 +48,8 @@
     "eslint": "^8.56.0",
     "prettier": "^3.2.4",
     "rimraf": "^6.0.1",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vite": "^6.2.3"
   },
   "keywords": [
     "cluster-router",

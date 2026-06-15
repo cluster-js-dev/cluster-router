@@ -62,7 +62,7 @@ export class RouterService {
 
   private _getUrl(path: string, params?: Record<string, string>): string {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    if (params) {
+    if (params && Object.keys(params).length > 0) {
       const queryString = Object.keys(params)
         .map(
           (key) =>

@@ -1,7 +1,7 @@
 import { ClComponent } from "cluster-components";
 import { Inject } from "cluster-inject";
 
-import { ClBaseApp, ClBasePage } from "../../src/app";
+import { ClBaseApp, ClBasePage, Routes } from "../../src/app";
 import { RouterService } from "../../src/services";
 
 import "./layouts/cl-admin-layout";
@@ -10,13 +10,38 @@ import "./pages/cl-about";
 import "./pages/cl-dashboard";
 import "./pages/cl-multi-url";
 import { ClNotFoundPage } from "./pages/cl-not-found";
+import { ClAboutPage } from "./pages/cl-about";
 
 @ClComponent("cl-test-app")
 export class ClTestApp extends ClBaseApp {
   @Inject(RouterService) private _router!: RouterService;
 
-  protected override routes = {
+  protected override routes: Routes = {
     "/404": { page: ClNotFoundPage as typeof ClBasePage },
+    "/blocked": {
+      page: ClAboutPage as typeof ClBasePage,
+      onBefore: async (): Promise<boolean> => false,
+    },
+    "/guarded": {
+      page: ClAboutPage as typeof ClBasePage,
+      onBefore: async (): Promise<boolean> => true,
+    },
+    "/with-props": {
+      page: ClAboutPage as typeof ClBasePage,
+      props: async (): Promise<Record<string, unknown>> => ({ id: "test" }),
+    },
+    "/error-route": {
+      page: ClAboutPage as typeof ClBasePage,
+      onBefore: async (): Promise<boolean> => {
+        throw new Error("guard error");
+      },
+    },
+    "/lazy": {
+      page: (): Promise<{ default: typeof ClBasePage }> =>
+        import("./pages/cl-about").then((m) => ({
+          default: m.ClAboutPage as typeof ClBasePage,
+        })),
+    },
   };
 
   protected override afterRender(): void {

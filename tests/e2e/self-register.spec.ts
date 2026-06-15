@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+﻿import { test, expect } from "./fixtures";
 
 import { setup, navigate, pageContent } from "./tools";
 
@@ -43,7 +43,7 @@ test.describe("Self-registering routes via @ClPage", () => {
     page,
   }) => {
     await setup(page);
-    // /404 is in both registry (if declared) and this.routes — manual wins
+    // /404 is in both registry (if declared) and this.routes - manual wins
     await navigate(page, "/404");
     expect(await pageContent(page)).toBe("Not Found Page");
   });

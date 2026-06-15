@@ -40,9 +40,14 @@ export class RouterService {
 
     path = this._getUrl(path, params);
     if (keepHistory) {
-      window.history.pushState({}, "", path);
+      // Persist current scroll so the browser can restore it on back navigation.
+      window.history.replaceState(
+        { ...(window.history.state ?? {}), scrollY: window.scrollY },
+        "",
+      );
+      window.history.pushState({ scrollY: 0 }, "", path);
     } else {
-      window.history.replaceState(null, "", path);
+      window.history.replaceState({ scrollY: 0 }, "", path);
     }
 
     window.dispatchEvent(new CustomEvent("on-route", {}));

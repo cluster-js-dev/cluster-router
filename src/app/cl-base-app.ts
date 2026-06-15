@@ -47,6 +47,7 @@ export class ClBaseApp extends ClBase {
   protected override afterRender(): void {
     super.afterRender();
     if (this.firstRender) {
+      history.scrollRestoration = "manual";
       window.addEventListener("on-route", this._onRoute);
       window.addEventListener("popstate", this._onPopState);
       void this._loadPageAsync();
@@ -74,6 +75,11 @@ export class ClBaseApp extends ClBase {
     this._navController?.abort();
     const ctrl = new AbortController();
     this._navController = ctrl;
+
+    // Capture before any await — history.state reflects the navigation target.
+    // forward nav: RouterService sets scrollY=0; back/forward: saved value restored by browser.
+    const targetScrollY: number =
+      (window.history.state as { scrollY?: number })?.scrollY ?? 0;
 
     if (this.routes === undefined) {
       return;
@@ -142,5 +148,8 @@ export class ClBaseApp extends ClBase {
         props: params,
       });
     body.render();
+    requestAnimationFrame(() =>
+      window.scrollTo({ top: targetScrollY, behavior: "instant" }),
+    );
   }
 }

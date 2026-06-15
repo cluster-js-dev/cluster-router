@@ -51,15 +51,18 @@ export class RouterService {
   /**
    * Forces navigation to a specified path via full page reload.
    */
-  public forceGoTo(path: string, params?: Record<string, string>) {
-    window.location.href = window.location.origin + this._getUrl(path, params);
+  public forceGoTo(path: string, params?: Record<string, string>): void {
+    window.location.href = this._getUrl(path, params);
   }
 
   private _getUrl(path: string, params?: Record<string, string>): string {
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
     if (params) {
       const queryString = Object.keys(params)
-        .map((key) => `${key}=${encodeURIComponent(params[key])}`)
+        .map(
+          (key) =>
+            `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`,
+        )
         .join("&");
       return `${normalizedPath}?${queryString}`;
     }

@@ -3,9 +3,9 @@ import { html, RenderTemplate } from "cluster-templates";
 
 @ClComponent("cl-body")
 export class ClBody extends ClBase {
-  private static _instance: ClBody;
+  private static _instance: ClBody | undefined;
 
-  public static get instance() {
+  public static get instance(): ClBody | undefined {
     return ClBody._instance;
   }
 

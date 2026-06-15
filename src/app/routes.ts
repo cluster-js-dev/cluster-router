@@ -6,6 +6,8 @@ export type PageFactory = () => Promise<{ default: typeof ClBasePage }>;
 export type RouteData = {
   page: typeof ClBasePage | PageFactory;
   layout?: typeof ClBaseLayout;
+  /** Name of the <cl-body> outlet to render into. Defaults to "default". */
+  outlet?: string;
   onBefore?: (params: Record<string, any> | null) => Promise<boolean>;
   props?: (params: Record<string, any> | null) => Promise<Record<string, any>>;
 };

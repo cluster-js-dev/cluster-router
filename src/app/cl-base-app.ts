@@ -84,7 +84,7 @@ export class ClBaseApp extends ClBase {
 
     if (routeInfo === null) {
       if (!("/404" in this.routes)) {
-        const body = ClBody.instance;
+        const body = ClBody.named("default");
         if (body !== undefined) {
           body.templateHtml = () => html`<h1>404 Not Found</h1>`;
           body.render();
@@ -133,7 +133,7 @@ export class ClBaseApp extends ClBase {
       return;
     }
 
-    const body = ClBody.instance;
+    const body = ClBody.named(route.outlet ?? "default");
     if (body === undefined) return;
 
     body.templateHtml = () =>

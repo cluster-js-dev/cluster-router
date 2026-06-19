@@ -1,25 +1,29 @@
 import { Injectable } from "cluster-inject";
 
+import { resolveAlias } from "../app/page-registry";
+
+/**
+ * Programmatic navigation service. Manages `history.pushState` / `replaceState`,
+ * persists scroll position across back/forward navigation, and fires the `cl-route`
+ * window event that triggers `ClBaseApp._loadPageAsync()`.
+ *
+ * Always navigate via this service — never dispatch `cl-route` directly.
+ */
 @Injectable("singleton")
 export class RouterService {
-  /**
-   * Navigates to a specified path.
-   */
+  /** Navigates to `path` and pushes a new history entry. */
   public goTo(path: string): void;
 
-  /**
-   * Navigates to a specified path and includes query parameters.
-   */
+  /** Navigates to `path` with query parameters appended and pushes a new history entry. */
   public goTo(path: string, params: Record<string, string>): void;
 
   /**
-   * Navigates to a specified path and includes the option to keep the history.
+   * Navigates to `path`. When `keepHistory = false`, the current entry is replaced
+   * (browser back skips the navigation). Default: `true`.
    */
   public goTo(path: string, keepHistory: boolean): void;
 
-  /**
-   * Navigates to a specified path, includes query parameters, and allows for history management.
-   */
+  /** Navigates to `path` with query parameters and explicit history control. */
   public goTo(
     path: string,
     params: Record<string, string>,
@@ -54,14 +58,18 @@ export class RouterService {
   }
 
   /**
-   * Forces navigation to a specified path via full page reload.
+   * Forces navigation to `path` via full page reload (`window.location.href`).
+   * Use only when a hard reload is intentional (e.g. session change requiring fresh server state).
    */
   public forceGoTo(path: string, params?: Record<string, string>): void {
     window.location.href = this._getUrl(path, params);
   }
 
   private _getUrl(path: string, params?: Record<string, string>): string {
-    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    // If the path doesn't start with "/" it may be an alias — resolve it first.
+    const resolved = !path.startsWith("/") ? resolveAlias(path) : undefined;
+    const normalizedPath =
+      resolved ?? (path.startsWith("/") ? path : `/${path}`);
     if (params && Object.keys(params).length > 0) {
       const queryString = Object.keys(params)
         .map(

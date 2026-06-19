@@ -1,7 +1,7 @@
 import { ClComponent } from "cluster-components";
 import { Inject } from "cluster-inject";
 
-import { ClBaseApp, ClBasePage, Routes } from "../../src/app";
+import { ClBaseApp, ClBasePage, Routes, getCurrentAlias } from "../../src/app";
 import { RouterService } from "../../src/services";
 
 import "./layouts/cl-admin-layout";
@@ -9,6 +9,7 @@ import "./pages/cl-home";
 import "./pages/cl-about";
 import "./pages/cl-dashboard";
 import "./pages/cl-multi-url";
+import "./pages/cl-alias-page";
 import { ClNotFoundPage } from "./pages/cl-not-found";
 import { ClAboutPage } from "./pages/cl-about";
 
@@ -17,7 +18,7 @@ export class ClTestApp extends ClBaseApp {
   @Inject(RouterService) private _router!: RouterService;
 
   protected override routes: Routes = {
-    "/404": { page: ClNotFoundPage as typeof ClBasePage },
+    "/404": { page: ClNotFoundPage as typeof ClBasePage, alias: "not-found" },
     "/blocked": {
       page: ClAboutPage as typeof ClBasePage,
       onBefore: async (): Promise<boolean> => false,
@@ -63,6 +64,10 @@ export class ClTestApp extends ClBaseApp {
 
   public currentPath(): string {
     return window.location.pathname + window.location.search;
+  }
+
+  public getAlias(): string | undefined {
+    return getCurrentAlias();
   }
 }
 

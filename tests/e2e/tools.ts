@@ -76,3 +76,7 @@ export async function layoutId(page: Page): Promise<string | null> {
 export async function currentPath(page: Page): Promise<string> {
   return page.evaluate(() => window.location.pathname + window.location.search);
 }
+
+export async function routeAlias(page: Page): Promise<string | undefined> {
+  return page.evaluate(() => window.testApp.getAlias());
+}

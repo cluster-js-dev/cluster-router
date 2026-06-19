@@ -1,18 +1,9 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
-import istanbul from "vite-plugin-istanbul";
 
 export default defineConfig({
   root: ".",
-  plugins: [
-    istanbul({
-      include: ["src/**/*.ts"],
-      exclude: ["node_modules/**", "tests/**", "**/*.d.ts"],
-      extension: [".ts"],
-      requireEnv: false,
-      forceBuildInstrument: true,
-    }),
-  ],
+  plugins: [],
   server: {
     port: 8080,
   },

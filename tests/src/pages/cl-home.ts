@@ -5,6 +5,6 @@ import { ClBasePage } from "../../../src/app";
 
 @ClPage("cl-home-page", {
   html: () => html`<div id="page-content">Home Page</div>`,
-  page: [{ url: "/" }],
+  page: [{ url: "/", alias: "home" }],
 })
 export class ClHomePage extends ClBasePage {}

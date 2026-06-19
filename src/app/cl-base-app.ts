@@ -3,10 +3,23 @@ import { ClBase, ClComponent } from "cluster-components";
 import { Inject } from "cluster-inject";
 import { URLInfoService } from "cluster-extensions/services";
 
-import { RouteData, Routes } from "./routes";
+import { PageFactory, RouteData, Routes } from "./routes";
 import { ClBody } from "./cl-body";
 import { ClBaseLayout } from "./cl-base-layout";
+import { ClBasePage } from "./cl-base-page";
+import {
+  buildRegistryRoutes,
+  registerAlias,
+  setCurrentAlias,
+} from "./page-registry";
 
+/**
+ * SPA root shell. Manages the full navigation lifecycle:
+ * URL listening → layout switching → guard/props resolution → page rendering → scroll restoration.
+ *
+ * Subclass this, override `routes` for manual entries, and import page modules so `@ClPage`
+ * decorators auto-register before the first navigation.
+ */
 @ClComponent("cl-base-app", {
   css: () => css`
     :host {
@@ -18,14 +31,21 @@ import { ClBaseLayout } from "./cl-base-layout";
   `,
 })
 export class ClBaseApp extends ClBase {
+  /** Manual route map. Merged with the `@ClPage` registry on first navigation; manual entries win on conflict. */
   protected routes?: Routes;
 
   @Inject(URLInfoService)
   protected urlInfo!: URLInfoService;
 
+  /** Dynamically set to render the active layout element. Do not set this directly. */
   public templateHtml?: () => RenderTemplate;
 
-  private _layout?: typeof ClBaseLayout = ClBaseLayout;
+  private _layout?: typeof ClBaseLayout = undefined;
+  private _navController?: AbortController;
+  // Bridges the layout-change render cycle to the subsequent page-load cycle.
+  private _pendingPageLoad = false;
+  // Built once on first navigation by merging the @ClPage registry with this.routes.
+  private _cachedRoutes?: Routes;
 
   private _onRoute = () => {
     void this._loadPageAsync();
@@ -44,68 +64,129 @@ export class ClBaseApp extends ClBase {
   protected override afterRender(): void {
     super.afterRender();
     if (this.firstRender) {
-      window.addEventListener("on-route", this._onRoute);
+      history.scrollRestoration = "manual";
+      window.addEventListener("cl-route", this._onRoute);
       window.addEventListener("popstate", this._onPopState);
+      void this._loadPageAsync();
+    } else if (this._pendingPageLoad) {
+      this._pendingPageLoad = false;
+      void this._loadPageAsync();
     }
-    void this._loadPageAsync();
+  }
+
+  /**
+   * Called when `_loadPageAsync()` catches a thrown error (from `onBefore`, `props`, or a `PageFactory`).
+   * Override to render a custom error UI. Default: renders `<h1>Navigation error</h1>` in the default outlet.
+   */
+  protected onRouteError(_error: unknown): void {
+    const body = ClBody.instance;
+    if (body !== undefined) {
+      body.templateHtml = () => html`<h1>Navigation error</h1>`;
+      body.render();
+    }
   }
 
   protected override dispose(): void {
-    window.removeEventListener("on-route", this._onRoute);
+    window.removeEventListener("cl-route", this._onRoute);
     window.removeEventListener("popstate", this._onPopState);
+    this._navController?.abort();
+  }
+
+  /**
+   * Lazily builds the merged route map: `@ClPage` registry entries first, then `this.routes` (manual wins).
+   * Result is cached — routes are static and must not be mutated after the first navigation.
+   */
+  private _getRoutes(): Routes {
+    if (this._cachedRoutes === undefined) {
+      this._cachedRoutes = { ...buildRegistryRoutes(), ...this.routes };
+      // Register aliases from manual this.routes (not covered by @ClPage registration).
+      for (const [url, route] of Object.entries(this._cachedRoutes)) {
+        if (route?.alias !== undefined) registerAlias(route.alias, url);
+      }
+    }
+    return this._cachedRoutes;
   }
 
   private async _loadPageAsync(): Promise<void> {
-    if (this.routes === undefined) {
-      return;
-    }
+    this._navController?.abort();
+    const ctrl = new AbortController();
+    this._navController = ctrl;
 
-    const routeInfo = this.urlInfo.matchRoute(this.routes);
+    // Capture before any await — history.state reflects the navigation target.
+    // forward nav: RouterService sets scrollY=0; back/forward: saved value restored by browser.
+    const targetScrollY: number =
+      (window.history.state as { scrollY?: number })?.scrollY ?? 0;
+
+    const routes = this._getRoutes();
+    if (Object.keys(routes).length === 0) return;
+
+    const routeInfo = this.urlInfo.matchRoute(routes as any);
     let route: RouteData;
 
     if (routeInfo === null) {
-      if (!("/404" in this.routes)) {
-        ClBody.instance.templateHtml = () => html`<h1>404 Not Found</h1>`;
-        ClBody.instance.render();
+      if (!("/404" in routes)) {
+        const body = ClBody.named("default");
+        if (body !== undefined) {
+          setCurrentAlias(undefined);
+          body.templateHtml = () => html`<h1>404 Not Found</h1>`;
+          body.render();
+        }
         return;
       }
-      route = this.routes["/404"]!;
+      route = routes["/404"]!;
     } else {
-      route = this.routes[routeInfo.path]!;
+      route = routes[routeInfo.path]!;
     }
 
-    const layout = route.layout;
+    const layout = route.layout ?? ClBaseLayout;
     if (layout !== this._layout) {
       this._layout = layout;
       this.templateHtml = () =>
         ClBase.dynamic({
-          name: layout?.clName || "cl-base-layout",
+          name: layout.clName,
         });
+      this._pendingPageLoad = true;
       this.render();
       return;
     }
 
     let params: Record<string, any> = {};
-    if (route.props) {
-      params = await route.props(routeInfo?.params ?? null);
+    let PageClass: typeof ClBasePage;
+    try {
+      if (route.props) {
+        params = await route.props(routeInfo?.params ?? null);
+        if (ctrl.signal.aborted) return;
+      }
+
+      if (route.onBefore !== undefined) {
+        if (!(await route.onBefore(routeInfo?.params ?? null))) return;
+        if (ctrl.signal.aborted) return;
+      }
+
+      if ("clName" in route.page) {
+        PageClass = route.page as typeof ClBasePage;
+      } else {
+        const mod = await (route.page as PageFactory)();
+        if (ctrl.signal.aborted) return;
+        PageClass = mod.default;
+      }
+    } catch (error) {
+      if (!ctrl.signal.aborted) this.onRouteError(error);
+      return;
     }
 
-    if (route.onBefore !== undefined) {
-      if (await route.onBefore(routeInfo?.params ?? null)) {
-        ClBody.instance.templateHtml = () =>
-          ClBase.dynamic({
-            name: route.page.clName,
-            props: params,
-          });
-        ClBody.instance.render();
-      }
-    } else {
-      ClBody.instance.templateHtml = () =>
-        ClBase.dynamic({
-          name: route.page.clName,
-          props: params,
-        });
-      ClBody.instance.render();
-    }
+    const body = ClBody.named(route.outlet ?? "default");
+    if (body === undefined) return;
+
+    setCurrentAlias(route.alias);
+    body.templateHtml = () =>
+      ClBase.dynamic({
+        name: PageClass.clName,
+        props: params,
+      });
+    body.render();
+    requestAnimationFrame(() =>
+      window.scrollTo({ top: targetScrollY, behavior: "instant" }),
+    );
   }
 }

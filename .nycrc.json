@@ -1,0 +1,9 @@
+{
+  "report-dir": "coverage",
+  "reporter": ["text", "html", "text-summary"],
+  "extension": [".ts"],
+  "include": ["src/**/*.ts"],
+  "exclude": ["tests/**", "node_modules/**", "**/*.d.ts"],
+  "sourceMap": true,
+  "all": false
+}

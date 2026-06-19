@@ -17,3 +17,8 @@ Thumbs.db
 *.swp
 
 cluster-router-*.tgz
+
+.nyc_output/
+coverage/
+playwright-report/
+test-results/

@@ -9,6 +9,8 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      // treeshake:false preserves lazily-imported page modules that static analysis sees as dead code.
+      // minify:false keeps output readable for Playwright test debugging.
       treeshake: false,
       cache: false,
       input: {

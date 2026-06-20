@@ -15,5 +15,15 @@ module.exports = {
   },
   rules: {
     'no-console': 'warn',
+    'eqeqeq': ['error', 'always'],
+    '@typescript-eslint/no-explicit-any': 'error',
   },
+  overrides: [
+    {
+      files: ['tests/**/*.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+      },
+    },
+  ],
 };

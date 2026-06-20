@@ -3,7 +3,7 @@ import { ClBase, ClComponent } from "cluster-components";
 import { Inject } from "cluster-inject";
 import { URLInfoService } from "cluster-extensions/services";
 
-import { PageFactory, RouteData, Routes } from "./routes";
+import { PageFactory, RouteData, RouteParams, Routes } from "./routes";
 import { ClBody } from "./cl-body";
 import { ClBaseLayout } from "./cl-base-layout";
 import { ClBasePage } from "./cl-base-page";
@@ -76,10 +76,12 @@ export class ClBaseApp extends ClBase {
 
   /**
    * Called when `_loadPageAsync()` catches a thrown error (from `onBefore`, `props`, or a `PageFactory`).
-   * Override to render a custom error UI. Default: renders `<h1>Navigation error</h1>` in the default outlet.
+   * Override to render a custom error UI. Default: renders `<h1>Navigation error</h1>` in the failing outlet.
+   * @param _error - The caught error.
+   * @param outlet - The outlet name that was the target of the failing navigation. Defaults to `"default"`.
    */
-  protected onRouteError(_error: unknown): void {
-    const body = ClBody.instance;
+  protected onRouteError(_error: unknown, outlet: string = "default"): void {
+    const body = ClBody.named(outlet);
     if (body !== undefined) {
       body.templateHtml = () => html`<h1>Navigation error</h1>`;
       body.render();
@@ -120,6 +122,7 @@ export class ClBaseApp extends ClBase {
     const routes = this._getRoutes();
     if (Object.keys(routes).length === 0) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const routeInfo = this.urlInfo.matchRoute(routes as any);
     let route: RouteData;
 
@@ -150,7 +153,7 @@ export class ClBaseApp extends ClBase {
       return;
     }
 
-    let params: Record<string, any> = {};
+    let params: RouteParams = {};
     let PageClass: typeof ClBasePage;
     try {
       if (route.props) {
@@ -171,7 +174,8 @@ export class ClBaseApp extends ClBase {
         PageClass = mod.default;
       }
     } catch (error) {
-      if (!ctrl.signal.aborted) this.onRouteError(error);
+      if (!ctrl.signal.aborted)
+        this.onRouteError(error, route.outlet ?? "default");
       return;
     }
 

@@ -25,13 +25,26 @@ export class ClBody extends ClBase {
   /** Set by `ClBaseApp._loadPageAsync()` before calling `render()`. */
   public templateHtml?: () => RenderTemplate;
 
+  // Tracks the name under which this instance is currently registered so that
+  // a runtime name change doesn't leave a stale entry in _instances.
+  private _registeredName?: string;
+
   protected override beforeRender(): void {
+    if (
+      this._registeredName !== undefined &&
+      this._registeredName !== this.name &&
+      ClBody._instances.get(this._registeredName) === this
+    ) {
+      ClBody._instances.delete(this._registeredName);
+    }
+    this._registeredName = this.name;
     ClBody._instances.set(this.name, this);
   }
 
   protected override dispose(): void {
-    if (ClBody._instances.get(this.name) === this) {
-      ClBody._instances.delete(this.name);
+    const nameToRemove = this._registeredName ?? this.name;
+    if (ClBody._instances.get(nameToRemove) === this) {
+      ClBody._instances.delete(nameToRemove);
     }
     super.dispose();
   }

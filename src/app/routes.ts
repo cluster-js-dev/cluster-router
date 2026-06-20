@@ -5,6 +5,7 @@ import { ClBasePage } from "./cl-base-page";
 export type PageFactory = () => Promise<{ default: typeof ClBasePage }>;
 
 /** Shape for URL parameters extracted by `URLInfoService.matchRoute()`. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type RouteParams = Record<string, any>;
 
 /**
@@ -38,7 +39,7 @@ export type RouteData<P extends RouteParams = RouteParams> = {
    * Data resolver. Return value is spread as props into the page via `ClBase.dynamic({ props })`.
    * Receives URL params. Runs BEFORE `onBefore`.
    */
-  props?: (params: P | null) => Promise<Record<string, any>>;
+  props?: (params: P | null) => Promise<RouteParams>;
 };
 
 /**
@@ -47,6 +48,6 @@ export type RouteData<P extends RouteParams = RouteParams> = {
  * The special key `"/404"` is rendered when no other pattern matches.
  */
 export interface Routes {
-  [key: string]: RouteData<any> | undefined;
-  "/404"?: RouteData<any>;
+  [key: string]: RouteData | undefined;
+  "/404"?: RouteData;
 }

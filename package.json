@@ -1,6 +1,6 @@
 {
   "name": "cluster-router",
-  "version": "0.1.57",
+  "version": "0.1.59",
   "description": "SPA routing layer for cluster-components — app shell, page/layout base classes, and router service",
   "main": "dist/src/index.js",
   "module": "./dist/src/index.js",
@@ -42,8 +42,8 @@
   "author": "Jonathan Espinal",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.51.1",
-    "@types/node": "^22.13.11",
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^26.0.0",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
     "@vitest/coverage-v8": "^4.1.9",
@@ -65,9 +65,9 @@
     "spa"
   ],
   "dependencies": {
-    "cluster-components": "file:../cluster-components/cluster-components-0.1.54.tgz",
-    "cluster-extensions": "file:../cluster-extensions/cluster-extensions-0.1.48.tgz",
-    "cluster-inject": "file:../cluster-inject/cluster-inject-0.1.52.tgz",
-    "cluster-templates": "file:../cluster-templates/cluster-templates-0.1.74.tgz"
+    "cluster-components": "file:../cluster-components/cluster-components-0.1.56.tgz",
+    "cluster-extensions": "file:../cluster-extensions/cluster-extensions-0.1.50.tgz",
+    "cluster-inject": "file:../cluster-inject/cluster-inject-0.1.54.tgz",
+    "cluster-templates": "file:../cluster-templates/cluster-templates-0.1.76.tgz"
   }
 }

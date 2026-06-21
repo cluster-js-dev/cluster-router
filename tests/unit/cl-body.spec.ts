@@ -3,19 +3,19 @@ import { ClBody } from "../../src/app/cl-body";
 
 // Creates a minimal stub for ClBody lifecycle testing without needing a real
 // DOM connection. Object.create bypasses the constructor so the framework
-// lifecycle is not triggered; we call beforeRender/dispose directly.
+// lifecycle is not triggered; we call beforeRender/onDestroy directly.
 function makeStub(name: string = "default"): ClBody {
   const stub = Object.create(ClBody.prototype) as ClBody;
   (stub as unknown as Record<string, unknown>)["name"] = name;
   return stub;
 }
 
-// Prevent super.dispose() (ClBase) from erroring on a stub object.
-function spyDispose() {
+// Prevent super.onDestroy() (ClBase) from erroring on a stub object.
+function spyOnDestroy() {
   return vi
     .spyOn(
-      Object.getPrototypeOf(ClBody.prototype) as { dispose(): void },
-      "dispose",
+      Object.getPrototypeOf(ClBody.prototype) as { onDestroy(): void },
+      "onDestroy",
     )
     .mockImplementation(() => {});
 }
@@ -63,23 +63,23 @@ describe("ClBody — static registry", () => {
     expect(ClBody.named("slot")).toBe(body2);
   });
 
-  // region: dispose deregistration
+  // region: onDestroy deregistration
 
-  it("dispose() removes the instance when it is the current registrant", () => {
-    spyDispose();
+  it("onDestroy() removes the instance when it is the current registrant", () => {
+    spyOnDestroy();
     const body = makeStub("main");
     (body as unknown as { beforeRender(): void }).beforeRender();
-    (body as unknown as { dispose(): void }).dispose();
+    (body as unknown as { onDestroy(): void }).onDestroy();
     expect(ClBody.named("main")).toBeUndefined();
   });
 
-  it("dispose() does not remove a different instance that owns the same name", () => {
-    spyDispose();
+  it("onDestroy() does not remove a different instance that owns the same name", () => {
+    spyOnDestroy();
     const body1 = makeStub("slot");
     const body2 = makeStub("slot");
     (body1 as unknown as { beforeRender(): void }).beforeRender();
     (body2 as unknown as { beforeRender(): void }).beforeRender(); // body2 takes over
-    (body1 as unknown as { dispose(): void }).dispose(); // must NOT remove body2
+    (body1 as unknown as { onDestroy(): void }).onDestroy(); // must NOT remove body2
     expect(ClBody.named("slot")).toBe(body2);
   });
 

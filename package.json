@@ -52,7 +52,7 @@
     "happy-dom": "^20.10.6",
     "prettier": "^3.2.4",
     "rimraf": "^6.0.1",
-    "typescript": "^5.8.2",
+    "typescript": "^6.0.3",
     "vite": "^6.2.3",
     "vitest": "^4.1.9"
   },
@@ -65,9 +65,9 @@
     "spa"
   ],
   "dependencies": {
-    "cluster-components": "file:../cluster-components/cluster-components-0.1.59.tgz",
-    "cluster-extensions": "file:../cluster-extensions/cluster-extensions-0.1.53.tgz",
-    "cluster-inject": "file:../cluster-inject/cluster-inject-0.1.57.tgz",
-    "cluster-templates": "file:../cluster-templates/cluster-templates-0.1.79.tgz"
+    "cluster-components": "file:../cluster-components/cluster-components-0.1.58.tgz",
+    "cluster-extensions": "file:../cluster-extensions/cluster-extensions-0.1.52.tgz",
+    "cluster-inject": "file:../cluster-inject/cluster-inject-0.1.56.tgz",
+    "cluster-templates": "file:../cluster-templates/cluster-templates-0.1.78.tgz"
   }
 }

@@ -41,12 +41,12 @@ export class ClBody extends ClBase {
     ClBody._instances.set(this.name, this);
   }
 
-  protected override dispose(): void {
+  protected override onDestroy(): void {
     const nameToRemove = this._registeredName ?? this.name;
     if (ClBody._instances.get(nameToRemove) === this) {
       ClBody._instances.delete(nameToRemove);
     }
-    super.dispose();
+    super.onDestroy();
   }
 
   protected override html(): RenderTemplate {

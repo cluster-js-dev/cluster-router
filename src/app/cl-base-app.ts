@@ -88,11 +88,11 @@ export class ClBaseApp extends ClBase {
     }
   }
 
-  protected override dispose(): void {
+  protected override onDestroy(): void {
     window.removeEventListener("cl-route", this._onRoute);
     window.removeEventListener("popstate", this._onPopState);
     this._navController?.abort();
-    super.dispose();
+    super.onDestroy();
   }
 
   /**

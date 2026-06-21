@@ -1,6 +1,6 @@
-﻿import { test, expect } from "./fixtures";
+import { test, expect } from "./fixtures";
 
-import { setup, navigate, pageContent } from "./tools";
+import { setup, navigate, pageContent, queryShadowText } from "./tools";
 
 test.describe("Self-registering routes via @ClPage", () => {
   test("page with single @ClPage url is automatically routable", async ({
@@ -43,7 +43,6 @@ test.describe("Self-registering routes via @ClPage", () => {
     page,
   }) => {
     await setup(page);
-    // /404 is in both registry (if declared) and this.routes - manual wins
     await navigate(page, "/404");
     expect(await pageContent(page)).toBe("Not Found Page");
   });
@@ -51,23 +50,7 @@ test.describe("Self-registering routes via @ClPage", () => {
   test("page[] with layout uses the declared layout", async ({ page }) => {
     await setup(page);
     await navigate(page, "/dashboard");
-    const id = await page.evaluate(() => {
-      function deepQuery(
-        root: Document | ShadowRoot,
-        sel: string,
-      ): Element | null {
-        const direct = root.querySelector(sel);
-        if (direct) return direct;
-        for (const el of root.querySelectorAll("*")) {
-          if (el.shadowRoot) {
-            const found = deepQuery(el.shadowRoot, sel);
-            if (found) return found;
-          }
-        }
-        return null;
-      }
-      return deepQuery(document, "#layout-id")?.textContent ?? null;
-    });
+    const id = await queryShadowText(page, "#layout-id");
     expect(id).toBe("admin");
   });
 });

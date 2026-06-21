@@ -1,6 +1,12 @@
-﻿import { test, expect } from "./fixtures";
+import { test, expect } from "./fixtures";
 
-import { setup, navigate, navigateWithParams, currentPath } from "./tools";
+import {
+  setup,
+  navigate,
+  navigateWithParams,
+  currentPath,
+  queryShadowText,
+} from "./tools";
 
 test.describe("Query parameters", () => {
   test("navigation with a single param encodes query string", async ({
@@ -47,23 +53,7 @@ test.describe("Query parameters", () => {
   }) => {
     await setup(page);
     await navigateWithParams(page, "/about", { tab: "info" });
-    const content = await page.evaluate(() => {
-      function deepQuery(
-        root: Document | ShadowRoot,
-        sel: string,
-      ): Element | null {
-        const direct = root.querySelector(sel);
-        if (direct) return direct;
-        for (const el of root.querySelectorAll("*")) {
-          if (el.shadowRoot) {
-            const found = deepQuery(el.shadowRoot, sel);
-            if (found) return found;
-          }
-        }
-        return null;
-      }
-      return deepQuery(document, "#page-content")?.textContent ?? null;
-    });
+    const content = await queryShadowText(page, "#page-content");
     expect(content).toBe("About Page");
   });
 });

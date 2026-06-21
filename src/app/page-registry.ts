@@ -86,9 +86,19 @@ export function getCurrentAlias(): string | undefined {
 }
 
 /**
- * Returns a plain-object snapshot of the registry.
+ * Returns a read-only plain-object snapshot of the registry.
  * Called once by `ClBaseApp._getRoutes()` and merged with `this.routes`.
  */
-export function buildRegistryRoutes(): Routes {
-  return Object.fromEntries(_registry) as Routes;
+export function buildRegistryRoutes(): Readonly<Routes> {
+  return Object.fromEntries(_registry) as Readonly<Routes>;
+}
+
+/**
+ * Resets all module-level registry state to empty.
+ * **For unit tests only** — never call this in production code.
+ */
+export function _resetForTests(): void {
+  _registry.clear();
+  _aliasMap.clear();
+  _currentAlias = undefined;
 }

@@ -1,6 +1,13 @@
 import { test, expect } from "./fixtures";
 
-import { setup, navigate, pageContent, currentPath, routeAlias } from "./tools";
+import {
+  setup,
+  navigate,
+  pageContent,
+  currentPath,
+  routeAlias,
+  queryShadowText,
+} from "./tools";
 
 test.describe("Route aliases", () => {
   test("goTo(alias) navigates to the correct page (@ClPage alias)", async ({
@@ -73,23 +80,7 @@ test.describe("Route aliases", () => {
     await setup(page);
     await navigate(page, "/alias-page");
     expect(await pageContent(page)).toBe("Alias Page");
-    const aliasEl = await page.evaluate(() => {
-      function deepQuery(
-        root: Document | ShadowRoot,
-        sel: string,
-      ): Element | null {
-        const direct = root.querySelector(sel);
-        if (direct) return direct;
-        for (const el of root.querySelectorAll("*")) {
-          if (el.shadowRoot) {
-            const found = deepQuery(el.shadowRoot, sel);
-            if (found) return found;
-          }
-        }
-        return null;
-      }
-      return deepQuery(document, "#route-alias")?.textContent ?? null;
-    });
+    const aliasEl = await queryShadowText(page, "#route-alias");
     expect(aliasEl).toBe("alias-test");
   });
 
@@ -97,13 +88,10 @@ test.describe("Route aliases", () => {
     page,
   }) => {
     await setup(page);
-    // history: [/, /about, /alias-page]
     await navigate(page, "/about", true);
     await navigate(page, "/alias-page", true);
-    // replace /alias-page with / via alias → history: [/, /about, /]
     await navigate(page, "home", false);
     expect(await currentPath(page)).toBe("/");
-    // goBack skips the replaced entry and lands on /about
     await page.goBack();
     await page.waitForTimeout(300);
     expect(await currentPath(page)).toBe("/about");

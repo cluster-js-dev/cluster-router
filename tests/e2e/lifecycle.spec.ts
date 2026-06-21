@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures";
 
-import { setup, navigate, pageContent } from "./tools";
+import { setup, navigate, pageContent, queryShadowExists } from "./tools";
 
 test.describe("Component lifecycle", () => {
   test("dispose removes event listeners without errors", async ({ page }) => {
@@ -19,23 +19,7 @@ test.describe("Component lifecycle", () => {
 
   test("cl-body dispose cleans up instance registry", async ({ page }) => {
     await setup(page);
-    const bodyCount = await page.evaluate(() => {
-      function deepQuery(
-        root: Document | ShadowRoot,
-        sel: string,
-      ): Element | null {
-        const direct = root.querySelector(sel);
-        if (direct) return direct;
-        for (const el of root.querySelectorAll("*")) {
-          if (el.shadowRoot) {
-            const found = deepQuery(el.shadowRoot, sel);
-            if (found) return found;
-          }
-        }
-        return null;
-      }
-      return deepQuery(document, "cl-body") !== null ? 1 : 0;
-    });
-    expect(bodyCount).toBe(1);
+    const bodyExists = await queryShadowExists(page, "cl-body");
+    expect(bodyExists).toBe(true);
   });
 });

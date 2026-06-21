@@ -92,6 +92,7 @@ export class ClBaseApp extends ClBase {
     window.removeEventListener("cl-route", this._onRoute);
     window.removeEventListener("popstate", this._onPopState);
     this._navController?.abort();
+    super.dispose();
   }
 
   /**
@@ -119,43 +120,51 @@ export class ClBaseApp extends ClBase {
     const targetScrollY: number =
       (window.history.state as { scrollY?: number })?.scrollY ?? 0;
 
-    const routes = this._getRoutes();
-    if (Object.keys(routes).length === 0) return;
+    // outlet is updated once the route is resolved so onRouteError always
+    // renders into the correct <cl-body>, even when the error is thrown early
+    // (e.g. in matchRoute or route resolution) before the route is known.
+    let outlet = "default";
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const routeInfo = this.urlInfo.matchRoute(routes as any);
-    let route: RouteData;
+    try {
+      const routes = this._getRoutes();
+      if (Object.keys(routes).length === 0) return;
 
-    if (routeInfo === null) {
-      if (!("/404" in routes)) {
-        const body = ClBody.named("default");
-        if (body !== undefined) {
-          setCurrentAlias(undefined);
-          body.templateHtml = () => html`<h1>404 Not Found</h1>`;
-          body.render();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const routeInfo = this.urlInfo.matchRoute(routes as any);
+      let route: RouteData;
+
+      if (routeInfo === null) {
+        if (!("/404" in routes)) {
+          const body = ClBody.named("default");
+          if (body !== undefined) {
+            setCurrentAlias(undefined);
+            body.templateHtml = () => html`<h1>404 Not Found</h1>`;
+            body.render();
+          }
+          return;
         }
+        route = routes["/404"]!;
+      } else {
+        route = routes[routeInfo.path]!;
+      }
+
+      outlet = route.outlet ?? "default";
+
+      const layout = route.layout ?? ClBaseLayout;
+      if (layout !== this._layout) {
+        this._layout = layout;
+        this.templateHtml = () =>
+          ClBase.dynamic({
+            name: layout.clName,
+          });
+        this._pendingPageLoad = true;
+        this.render();
         return;
       }
-      route = routes["/404"]!;
-    } else {
-      route = routes[routeInfo.path]!;
-    }
 
-    const layout = route.layout ?? ClBaseLayout;
-    if (layout !== this._layout) {
-      this._layout = layout;
-      this.templateHtml = () =>
-        ClBase.dynamic({
-          name: layout.clName,
-        });
-      this._pendingPageLoad = true;
-      this.render();
-      return;
-    }
+      let params: RouteParams = {};
+      let PageClass: typeof ClBasePage;
 
-    let params: RouteParams = {};
-    let PageClass: typeof ClBasePage;
-    try {
       if (route.props) {
         params = await route.props(routeInfo?.params ?? null);
         if (ctrl.signal.aborted) return;
@@ -173,24 +182,22 @@ export class ClBaseApp extends ClBase {
         if (ctrl.signal.aborted) return;
         PageClass = mod.default;
       }
+
+      const body = ClBody.named(outlet);
+      if (body === undefined) return;
+
+      setCurrentAlias(route.alias);
+      body.templateHtml = () =>
+        ClBase.dynamic({
+          name: PageClass.clName,
+          props: params,
+        });
+      body.render();
+      requestAnimationFrame(() =>
+        window.scrollTo({ top: targetScrollY, behavior: "instant" }),
+      );
     } catch (error) {
-      if (!ctrl.signal.aborted)
-        this.onRouteError(error, route.outlet ?? "default");
-      return;
+      if (!ctrl.signal.aborted) this.onRouteError(error, outlet);
     }
-
-    const body = ClBody.named(route.outlet ?? "default");
-    if (body === undefined) return;
-
-    setCurrentAlias(route.alias);
-    body.templateHtml = () =>
-      ClBase.dynamic({
-        name: PageClass.clName,
-        props: params,
-      });
-    body.render();
-    requestAnimationFrame(() =>
-      window.scrollTo({ top: targetScrollY, behavior: "instant" }),
-    );
   }
 }

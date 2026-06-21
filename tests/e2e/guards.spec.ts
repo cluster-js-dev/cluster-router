@@ -1,6 +1,6 @@
 import { test, expect } from "./fixtures";
 
-import { setup, navigate, pageContent } from "./tools";
+import { setup, navigate, pageContent, queryShadowText } from "./tools";
 
 test.describe("Route guards and props", () => {
   test("onBefore returning false blocks navigation, page stays", async ({
@@ -30,23 +30,7 @@ test.describe("Route guards and props", () => {
     await setup(page);
     await navigate(page, "/about");
     await navigate(page, "/error-route");
-    const errorText = await page.evaluate(() => {
-      function deepQuery(
-        root: Document | ShadowRoot,
-        sel: string,
-      ): Element | null {
-        const direct = root.querySelector(sel);
-        if (direct) return direct;
-        for (const el of root.querySelectorAll("*")) {
-          if (el.shadowRoot) {
-            const found = deepQuery(el.shadowRoot, sel);
-            if (found) return found;
-          }
-        }
-        return null;
-      }
-      return deepQuery(document, "h1")?.textContent ?? null;
-    });
+    const errorText = await queryShadowText(page, "h1");
     expect(errorText).toBe("Navigation error");
   });
 });

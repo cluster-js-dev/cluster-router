@@ -35,6 +35,11 @@ export function ClPage<T extends ClBasePage>(
     css: config?.css,
   });
   return function (target: typeof ClBasePage, context: ClassDecoratorContext) {
+    if (!(target.prototype instanceof ClBasePage)) {
+      throw new TypeError(
+        `@ClPage("${name}"): decorated class must extend ClBasePage (got ${context.name ?? target.name})`,
+      );
+    }
     baseDecorator(target, context);
     if (config?.page !== undefined && config.page.length > 0) {
       registerPageEntries(target, config.page);
